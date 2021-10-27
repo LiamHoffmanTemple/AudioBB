@@ -6,13 +6,17 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 class BookViewModel : ViewModel() {
-    private val bookLiveData = MutableLiveData<Book>()
 
-    fun getBook () : LiveData<Book> {
-        return bookLiveData
+    private val selectedBook: MutableLiveData<Book> by lazy {
+        MutableLiveData<Book>()
     }
 
-    fun setBook(book: Book) {
-        bookLiveData.value = book
+    fun getSelectedBook(): LiveData<Book> {
+        return selectedBook
     }
+
+    fun setSelectedBook(book: Book) {
+        selectedBook.value = book
+    }
+
 }

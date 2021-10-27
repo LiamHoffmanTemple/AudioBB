@@ -8,34 +8,50 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-
 class BookDetailsFragment : Fragment() {
-    // TODO: Rename and change types of parameters
 
+    lateinit var layout: View
+    lateinit var name: TextView
+    lateinit var author: TextView
+
+    companion object {
+        @JvmStatic
+        fun newInstance() = BookDetailsFragment()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_book_details, container, false)
+        layout = inflater.inflate(R.layout.fragment_book_details, container, false)
+        return layout
     }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        name = layout.findViewById(R.id.bookTitleTextView)
+        author = layout.findViewById(R.id.bookAuthorTextView)
+
         ViewModelProvider(requireActivity())
             .get(BookViewModel::class.java)
-            .getBook()
-            .observe(requireActivity()) {
-                view.findViewById<TextView>(R.id.bookTitleTextView).text = it.title
-                view.findViewById<TextView>(R.id.bookAuthorTextView).text = it.author
-            }
+            .getSelectedBook()
+            .observe(viewLifecycleOwner, {updateLabels()})
+
     }
 
+    private fun updateLabels() {
+        val book = ViewModelProvider(requireActivity())
+            .get(BookViewModel::class.java)
+            .getSelectedBook()
 
-
+        name.text = book.value?.title
+        author.text = book.value?.author
+    }
 
 }

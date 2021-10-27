@@ -7,7 +7,7 @@
     tools:context=".MainActivity">
 
     <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/bookListFragment"
+        android:id="@+id/bookListContainer"
         android:layout_width="412dp"
         android:layout_height="517dp"
         app:layout_constraintBottom_toBottomOf="parent"
