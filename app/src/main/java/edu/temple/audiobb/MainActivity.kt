@@ -1,49 +1,93 @@
 package edu.temple.audiobb
 
+import android.app.Activity
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.ViewModelProvider
 
-class MainActivity : AppCompatActivity(), BookListFragment.DoubleLayout {
+class MainActivity : AppCompatActivity(), BookListFragment.DoubleLayout, BookListFragment.Search {
 
-    private val blankBook = Book("", "")
+    private val blankBook = Book("", "", -1, "")
     var doubleFragment = false
     lateinit var bookViewModel: BookViewModel
+    val bookList = BookList()
+    var firstLoad = false
+    lateinit var startForResult: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setTitle("AudioBB")
 
-        var books:BookList = BookList()
-        books.add(Book("A Game of Thrones","George R. R. Martin"))
-        books.add(Book("The Lightning Thief","Rick Riordan"))
-        books.add(Book("The Ruins of Gorlan","John Flanagan"))
-        books.add(Book("Fahrenheit 451","Ray Bradbury"))
-        books.add(Book("1984","George Orwell"))
-        books.add(Book("The Hobbit","J.R.R. Tolkien"))
-        books.add(Book("Watchmen","Alan Moore"))
-        books.add(Book("The Iliad","Homer"))
-        books.add(Book("Moby-Dick","Herman Melville"))
-        books.add(Book("The Alchemist","Paulo Coelho"))
-
         bookViewModel = ViewModelProvider(this).get(BookViewModel::class.java)
 
         doubleFragment = findViewById<FragmentContainerView>(R.id.bookDetailsContainer) != null
 
+        startForResult = registerForActivityResult(StartActivityForResult()) {
+            if (it.resultCode == Activity.RESULT_OK) {
+                if (it.data != null) {
+                    val jsonbooks = it.data?.getSerializableExtra("bookjson") as BookList
+                    bookList.clear()
+                    for (i in 0 until jsonbooks.size()) {
+                        Log.i("Received Book:", jsonbooks.get(i).title)
+                        bookList.add(jsonbooks.get(i))
+                    }
+
+                    if (firstLoad) {
+                        loadFragments()
+                        firstLoad = false
+                    } else {
+                        if (supportFragmentManager.fragments[0] !is BookListFragment) {
+                            (supportFragmentManager.fragments[1] as BookListFragment)
+                                .updateList(bookList)
+                        } else {
+                            (supportFragmentManager.fragments[0] as BookListFragment)
+                                .updateList(bookList)
+                        }
+                    }
+                } else {
+                    Log.e("Error", "IS NULL LMAOOO")
+                }
+            }
+        }
+
         //First load
         if (savedInstanceState == null) {
+            firstLoad = true
+            makeSearch()
+        } else {
+            loadFragments()
+        }
+    }
+
+    override fun selectionMade() {
+        if (!doubleFragment) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.bookListContainer, BookDetailsFragment.newInstance())
+                .addToBackStack(null)
+                .commit()
+        }
+    }
+
+    private fun loadFragments() {
+        //First load
+        if (firstLoad) {
+
             bookViewModel.setSelectedBook(blankBook)
 
             if (doubleFragment) {
                 //Don't add to back stack
                 supportFragmentManager.beginTransaction()
-                    .add(R.id.bookListContainer, BookListFragment.newInstance(books))
+                    .add(R.id.bookListContainer, BookListFragment.newInstance(bookList))
                     .commit()
             } else {
                 supportFragmentManager.beginTransaction()
-                    .add(R.id.bookListContainer, BookListFragment.newInstance(books))
+                    .add(R.id.bookListContainer, BookListFragment.newInstance(bookList))
                     .addToBackStack(null)
                     .commit()
             }
@@ -71,15 +115,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.DoubleLayout {
                 .addToBackStack(null)
                 .commit()
         }
-
     }
 
-    override fun selectionMade() {
-        if (!doubleFragment) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.bookListContainer, BookDetailsFragment.newInstance())
-                .addToBackStack(null)
-                .commit()
-        }
+    override fun makeSearch() {
+        startForResult.launch(Intent(this, BookSearchActivity::class.java))
     }
 }

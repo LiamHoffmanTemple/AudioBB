@@ -7,12 +7,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
+import android.net.Uri
+import android.widget.ImageView
+import com.squareup.picasso.Picasso
+import java.net.URL
+import android.util.Log
+
 
 class BookDetailsFragment : Fragment() {
 
     lateinit var layout: View
     lateinit var name: TextView
     lateinit var author: TextView
+    lateinit var cover: ImageView
 
     companion object {
         @JvmStatic
@@ -35,8 +42,9 @@ class BookDetailsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        name = layout.findViewById(R.id.bookTitleTextView)
-        author = layout.findViewById(R.id.bookAuthorTextView)
+        name = layout.findViewById(R.id.bookTitleLabel)
+        author = layout.findViewById(R.id.bookAuthorLabel)
+        cover = layout.findViewById(R.id.bookCoverView)
 
         ViewModelProvider(requireActivity())
             .get(BookViewModel::class.java)
@@ -52,6 +60,11 @@ class BookDetailsFragment : Fragment() {
 
         name.text = book.value?.title
         author.text = book.value?.author
+        if (book.value == null || book.value?.coverURL.isNullOrEmpty()) {
+            Log.d("Image", "waiting for image")
+        } else {
+            Picasso.get().load(book.value?.coverURL).into(cover)
+        }
     }
 
 }
